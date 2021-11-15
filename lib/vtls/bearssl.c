@@ -135,9 +135,6 @@ static CURLcode load_cafile(struct cafile_source *source,
       return CURLE_SSL_CACERT_BADFILE;
   }
 
-  if(source->type == CAFILE_SOURCE_BLOB && source->len > (size_t)INT_MAX)
-    return CURLE_SSL_CACERT_BADFILE;
-
   ca.err = CURLE_OK;
   ca.in_cert = FALSE;
   ca.anchors = NULL;
