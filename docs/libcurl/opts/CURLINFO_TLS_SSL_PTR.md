@@ -11,6 +11,7 @@ See-also:
 Protocol:
   - TLS
 TLS-backend:
+  - BearSSL
   - GnuTLS
   - mbedTLS
   - OpenSSL

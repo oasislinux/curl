@@ -12,6 +12,7 @@ See-also:
   - CURLOPT_SSL_VERIFYHOST (3)
   - CURLOPT_SSL_VERIFYPEER (3)
 TLS-backend:
+  - BearSSL
   - OpenSSL
   - mbedTLS
   - rustls
@@ -79,8 +80,9 @@ int main(void)
 
 # HISTORY
 
-This option is supported by the mbedTLS (since 7.81.0), Rustls (since 7.82.0),
-wolfSSL (since 8.2.0), OpenSSL and Schannel backends.
+This option is supported by the BearSSL (since 7.79.0), mbedTLS (since
+7.81.0), Rustls (since 7.82.0), wolfSSL (since 8.2.0), OpenSSL and Schannel
+backends.
 
 # %AVAILABILITY%
 

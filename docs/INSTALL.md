@@ -137,6 +137,7 @@ alter it, you can select how to deal with each individual library.
 These options are provided to select the TLS backend to use.
 
  - AmiSSL: `--with-amissl`
+ - BearSSL: `--with-bearssl`
  - GnuTLS: `--with-gnutls`.
  - mbedTLS: `--with-mbedtls`
  - OpenSSL: `--with-openssl` (also for BoringSSL, AWS-LC, LibreSSL, and quictls)

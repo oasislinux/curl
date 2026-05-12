@@ -453,6 +453,7 @@ TLS:
   - all:
       - changed-files:
           - any-glob-to-all-files: "{\
+              CMake/FindBearSSL.cmake,\
               CMake/FindMbedTLS.cmake,\
               CMake/FindWolfSSL.cmake,\
               CMake/FindRustls.cmake,\
@@ -472,6 +473,7 @@ TLS:
               docs/libcurl/opts/CURLOPT_TLS*,\
               docs/libcurl/opts/CURLOPT_USE_SSL*,\
               lib/vtls/**,\
+              m4/curl-bearssl.m4,\
               m4/curl-gnutls.m4,\
               m4/curl-mbedtls.m4,\
               m4/curl-openssl.m4,\

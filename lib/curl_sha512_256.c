@@ -35,6 +35,7 @@
  * * wolfSSL
  * * Schannel SSPI
  * * mbedTLS
+ * * BearSSL
  * * Rustls
  * Skip the backend if it does not support the required algorithm */
 

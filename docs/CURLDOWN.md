@@ -95,6 +95,7 @@ If the `Protocol` list contains `TLS`, then there must also be a `TLS-backend`
 list, specifying `All` or a list of what TLS backends that work with this
 option. The available TLS backends are:
 
+- `BearSSL`
 - `GnuTLS`
 - `mbedTLS`
 - `OpenSSL` (also covers BoringSSL, LibreSSL, quictls, AWS-LC and AmiSSL)

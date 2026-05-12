@@ -424,7 +424,7 @@ FAQ
 
   curl can be built to use one of the following SSL alternatives: OpenSSL,
   LibreSSL, BoringSSL, AWS-LC, GnuTLS, wolfSSL, mbedTLS, Schannel (native
-  Windows) or Rustls. They all have their pros and cons, and we try to
+  Windows), BearSSL or Rustls. They all have their pros and cons, and we try to
   maintain a comparison of them here: https://curl.se/docs/ssl-compared.html
 
   2.3 How do I upgrade curl.exe in Windows?

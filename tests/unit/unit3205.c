@@ -29,7 +29,7 @@ static CURLcode test_unit3205(char *arg)
 {
   UNITTEST_BEGIN_SIMPLE
 
-#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS)
 
   struct test_cs_entry {
     uint16_t id;
@@ -38,6 +38,7 @@ static CURLcode test_unit3205(char *arg)
   };
 
   static const struct test_cs_entry test_cs_list[] = {
+#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
     { 0x1301, "TLS_AES_128_GCM_SHA256",
               NULL },
     { 0x1302, "TLS_AES_256_GCM_SHA384",
@@ -48,6 +49,7 @@ static CURLcode test_unit3205(char *arg)
               NULL },
     { 0x1305, "TLS_AES_128_CCM_8_SHA256",
               NULL },
+#endif
     { 0xC02B, "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
               "ECDHE-ECDSA-AES128-GCM-SHA256" },
     { 0xC02C, "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
@@ -60,7 +62,7 @@ static CURLcode test_unit3205(char *arg)
               "ECDHE-RSA-CHACHA20-POLY1305" },
     { 0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
               "ECDHE-ECDSA-CHACHA20-POLY1305" },
-#if defined(USE_MBEDTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
     { 0x002F, "TLS_RSA_WITH_AES_128_CBC_SHA",
               "AES128-SHA" },
     { 0x0035, "TLS_RSA_WITH_AES_256_CBC_SHA",
@@ -113,6 +115,8 @@ static CURLcode test_unit3205(char *arg)
               "ECDH-RSA-AES128-GCM-SHA256" },
     { 0xC032, "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384",
               "ECDH-RSA-AES256-GCM-SHA384" },
+#endif
+#if defined(USE_MBEDTLS)
     { 0x0001, "TLS_RSA_WITH_NULL_MD5",
               "NULL-MD5" },
     { 0x0002, "TLS_RSA_WITH_NULL_SHA",
@@ -199,6 +203,20 @@ static CURLcode test_unit3205(char *arg)
               "ECDHE-PSK-AES256-CBC-SHA" },
     { 0xCCAB, "TLS_PSK_WITH_CHACHA20_POLY1305_SHA256",
               "PSK-CHACHA20-POLY1305" },
+#endif
+#if defined(USE_BEARSSL)
+    { 0x000A, "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+              "DES-CBC3-SHA" },
+    { 0xC003, "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDH-ECDSA-DES-CBC3-SHA" },
+    { 0xC008, "TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDHE-ECDSA-DES-CBC3-SHA" },
+    { 0xC00D, "TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDH-RSA-DES-CBC3-SHA" },
+    { 0xC012, "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDHE-RSA-DES-CBC3-SHA" },
+#endif
+#if defined(USE_BEARSSL) || defined(USE_MBEDTLS)
     { 0xC09C, "TLS_RSA_WITH_AES_128_CCM",
               "AES128-CCM" },
     { 0xC09D, "TLS_RSA_WITH_AES_256_CCM",
@@ -215,6 +233,8 @@ static CURLcode test_unit3205(char *arg)
               "ECDHE-ECDSA-AES128-CCM8" },
     { 0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8",
               "ECDHE-ECDSA-AES256-CCM8" },
+#endif
+#if defined(USE_MBEDTLS)
     /* entries marked ns are non-"standard", they are not in OpenSSL */
     { 0x0041, "TLS_RSA_WITH_CAMELLIA_128_CBC_SHA",
               "CAMELLIA128-SHA" },
@@ -463,7 +483,7 @@ static CURLcode test_unit3205(char *arg)
 #else
     { 0x0000, "DHE-RSA-CHACHA20-POLY1305"},
 #endif
-#if defined(USE_MBEDTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
     { 0xC023, "ECDHE-ECDSA-AES128-SHA256" },
     { 0xC027, "ECDHE-RSA-AES128-SHA256" },
     { 0xC009, "ECDHE-ECDSA-AES128-SHA" },
@@ -489,7 +509,7 @@ static CURLcode test_unit3205(char *arg)
     { 0x0000, "DHE-RSA-AES128-SHA256" },
     { 0x0000, "DHE-RSA-AES256-SHA256" },
 #endif
-#if defined(USE_MBEDTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
     { 0x009C, "AES128-GCM-SHA256" },
     { 0x009D, "AES256-GCM-SHA384" },
     { 0x003C, "AES128-SHA256" },
@@ -504,7 +524,11 @@ static CURLcode test_unit3205(char *arg)
     { 0x0000, "AES128-SHA" },
     { 0x0000, "AES256-SHA" },
 #endif
+#if defined(USE_BEARSSL)
+    { 0x000A, "DES-CBC3-SHA" },
+#else
     { 0x0000, "DES-CBC3-SHA" },
+#endif
     { 0x0000, "GIBBERISH" },
     { 0x0000, "" },
   };
@@ -605,7 +629,7 @@ static CURLcode test_unit3205(char *arg)
       j++;
     }
   }
-#endif /* defined(USE_MBEDTLS) || defined(USE_RUSTLS) */
+#endif /* defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS) */
 
   UNITTEST_END_SIMPLE
 }

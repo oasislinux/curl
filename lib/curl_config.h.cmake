@@ -682,6 +682,9 @@ ${SIZEOF_TIME_T_CODE}
 /* if mbedTLS is enabled */
 #cmakedefine USE_MBEDTLS 1
 
+/* if BearSSL is enabled */
+#cmakedefine USE_BEARSSL 1
+
 /* if Rustls is enabled */
 #cmakedefine USE_RUSTLS 1
 

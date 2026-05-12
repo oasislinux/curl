@@ -680,6 +680,7 @@ if(WIN32)
   option(CURL_WINDOWS_SSPI "Enable SSPI on Windows" ${CURL_USE_SCHANNEL})
 endif()
 cmake_dependent_option(CURL_USE_MBEDTLS "Enable mbedTLS for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
+cmake_dependent_option(CURL_USE_BEARSSL "Enable BearSSL for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
 cmake_dependent_option(CURL_USE_WOLFSSL "Enable wolfSSL for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
 cmake_dependent_option(CURL_USE_GNUTLS "Enable GnuTLS for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
 cmake_dependent_option(CURL_USE_RUSTLS "Enable Rustls for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
@@ -687,6 +688,7 @@ cmake_dependent_option(CURL_USE_RUSTLS "Enable Rustls for SSL/TLS" OFF CURL_ENAB
 if(WIN32 OR
    CURL_USE_SCHANNEL OR
    CURL_USE_MBEDTLS OR
+   CURL_USE_BEARSSL OR
    CURL_USE_WOLFSSL OR
    CURL_USE_GNUTLS OR
    CURL_USE_RUSTLS)
@@ -706,6 +708,7 @@ curl_count_true(_enabled_ssl_options_count
   CURL_USE_SCHANNEL
   CURL_USE_OPENSSL
   CURL_USE_MBEDTLS
+  CURL_USE_BEARSSL
   CURL_USE_WOLFSSL
   CURL_USE_GNUTLS
   CURL_USE_RUSTLS
@@ -810,6 +813,21 @@ if(CURL_USE_MBEDTLS)
     set(_valid_default_ssl_backend TRUE)
   endif()
   set(_curl_ca_bundle_supported TRUE)
+endif()
+
+if(CURL_USE_BEARSSL)
+  find_package(BearSSL REQUIRED)
+  set(_ssl_enabled ON)
+  set(USE_BEARSSL ON)
+  list(APPEND CURL_LIBS ${BEARSSL_LIBRARIES})
+  include_directories(SYSTEM ${BEARSSL_INCLUDE_DIRS})
+
+  if(CURL_DEFAULT_SSL_BACKEND AND CURL_DEFAULT_SSL_BACKEND STREQUAL "bearssl")
+    set(_valid_default_ssl_backend TRUE)
+  endif()
+  set(_curl_ca_bundle_supported TRUE)
+
+  message(WARNING "BearSSL does not support TLS 1.3.")
 endif()
 
 if(CURL_USE_WOLFSSL)
@@ -2160,7 +2178,7 @@ curl_add_if("HTTP2"         USE_NGHTTP2)
 curl_add_if("HTTP3"         USE_NGTCP2 OR USE_QUICHE OR USE_MSH3 OR USE_OPENSSL_QUIC)
 curl_add_if("MultiSSL"      CURL_WITH_MULTI_SSL)
 curl_add_if("HTTPS-proxy"   NOT CURL_DISABLE_PROXY AND _ssl_enabled AND (USE_OPENSSL OR USE_GNUTLS
-                            OR USE_SCHANNEL OR USE_RUSTLS OR USE_MBEDTLS OR
+                            OR USE_SCHANNEL OR USE_RUSTLS OR USE_BEARSSL OR USE_MBEDTLS OR
                             (USE_WOLFSSL AND HAVE_WOLFSSL_BIO_NEW)))
 curl_add_if("Unicode"       ENABLE_UNICODE)
 curl_add_if("threadsafe"    HAVE_ATOMIC OR
@@ -2190,6 +2208,7 @@ curl_add_if("Schannel"         _ssl_enabled AND USE_SCHANNEL)
 curl_add_if("${_openssl}"      _ssl_enabled AND USE_OPENSSL AND OPENSSL_VERSION VERSION_LESS 3.0.0)
 curl_add_if("${_openssl} v3+"  _ssl_enabled AND USE_OPENSSL AND OPENSSL_VERSION VERSION_GREATER_EQUAL 3.0.0)
 curl_add_if("mbedTLS"          _ssl_enabled AND USE_MBEDTLS)
+curl_add_if("BearSSL"          _ssl_enabled AND USE_BEARSSL)
 curl_add_if("wolfSSL"          _ssl_enabled AND USE_WOLFSSL)
 curl_add_if("GnuTLS"           _ssl_enabled AND USE_GNUTLS)
 curl_add_if("rustls"           _ssl_enabled AND USE_RUSTLS)

@@ -23,7 +23,7 @@
  ***************************************************************************/
 #include "../curl_setup.h"
 
-#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS)
 #include "cipher_suite.h"
 #include "../curl_printf.h"
 #include <string.h>
@@ -180,7 +180,7 @@ static const struct cs_entry cs_list [] = {
   CS_ENTRY(0xCCA8, ECDHE,RSA,CHACHA20,POLY1305,,,,),
   CS_ENTRY(0xCCA9, TLS,ECDHE,ECDSA,WITH,CHACHA20,POLY1305,SHA256,),
   CS_ENTRY(0xCCA9, ECDHE,ECDSA,CHACHA20,POLY1305,,,,),
-#if defined(USE_MBEDTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
   CS_ENTRY(0x002F, TLS,RSA,WITH,AES,128,CBC,SHA,),
   CS_ENTRY(0x002F, AES128,SHA,,,,,,),
   CS_ENTRY(0x0035, TLS,RSA,WITH,AES,256,CBC,SHA,),
@@ -322,7 +322,19 @@ static const struct cs_entry cs_list [] = {
   CS_ENTRY(0xCCAB, TLS,PSK,WITH,CHACHA20,POLY1305,SHA256,,),
   CS_ENTRY(0xCCAB, PSK,CHACHA20,POLY1305,,,,,),
 #endif
-#if defined(USE_MBEDTLS)
+#if defined(USE_BEARSSL)
+  CS_ENTRY(0x000A, TLS,RSA,WITH,3DES,EDE,CBC,SHA,),
+  CS_ENTRY(0x000A, DES,CBC3,SHA,,,,,),
+  CS_ENTRY(0xC003, TLS,ECDH,ECDSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC003, ECDH,ECDSA,DES,CBC3,SHA,,,),
+  CS_ENTRY(0xC008, TLS,ECDHE,ECDSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC008, ECDHE,ECDSA,DES,CBC3,SHA,,,),
+  CS_ENTRY(0xC00D, TLS,ECDH,RSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC00D, ECDH,RSA,DES,CBC3,SHA,,,),
+  CS_ENTRY(0xC012, TLS,ECDHE,RSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC012, ECDHE,RSA,DES,CBC3,SHA,,,),
+#endif
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
   CS_ENTRY(0xC09C, TLS,RSA,WITH,AES,128,CCM,,),
   CS_ENTRY(0xC09C, AES128,CCM,,,,,,),
   CS_ENTRY(0xC09D, TLS,RSA,WITH,AES,256,CCM,,),
@@ -708,4 +720,4 @@ int Curl_cipher_suite_get_str(uint16_t id, char *buf, size_t buf_size,
   return r;
 }
 
-#endif /* defined(USE_MBEDTLS) || defined(USE_RUSTLS) */
+#endif /* defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS) */

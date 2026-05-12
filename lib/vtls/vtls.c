@@ -59,6 +59,7 @@
 #include "wolfssl.h"        /* wolfSSL versions */
 #include "schannel.h"       /* Schannel SSPI version */
 #include "mbedtls.h"        /* mbedTLS versions */
+#include "bearssl.h"        /* BearSSL versions */
 #include "rustls.h"         /* Rustls versions */
 
 #include "../slist.h"
@@ -974,6 +975,8 @@ const struct Curl_ssl *Curl_ssl =
   &Curl_ssl_openssl;
 #elif defined(USE_SCHANNEL)
   &Curl_ssl_schannel;
+#elif defined(USE_BEARSSL)
+  &Curl_ssl_bearssl;
 #else
 #error "Missing struct Curl_ssl for selected SSL backend"
 #endif
@@ -993,6 +996,9 @@ static const struct Curl_ssl *available_backends[] = {
 #endif
 #if defined(USE_SCHANNEL)
   &Curl_ssl_schannel,
+#endif
+#if defined(USE_BEARSSL)
+  &Curl_ssl_bearssl,
 #endif
 #if defined(USE_RUSTLS)
   &Curl_ssl_rustls,
