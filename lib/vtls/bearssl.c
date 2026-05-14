@@ -534,7 +534,6 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
   struct ssl_primary_config *conn_config = Curl_ssl_cf_get_primary_config(cf);
-  struct ssl_config_data *ssl_config = Curl_ssl_cf_get_config(cf, data);
   const struct curl_blob *ca_info_blob = conn_config->ca_info_blob;
   const char * const ssl_cafile =
     /* CURLOPT_CAINFO_BLOB overrides CURLOPT_CAINFO */
@@ -606,7 +605,7 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
   backend->x509.verifyhost = verifyhost;
   br_ssl_engine_set_x509(&backend->ctx.eng, &backend->x509.vtable);
 
-  if(ssl_config->primary.cache_session) {
+  if(Curl_ssl_scache_use(cf, data)) {
     struct Curl_ssl_session *sc_session = NULL;
 
     ret = Curl_ssl_scache_take(cf, data, connssl->peer.scache_key,
@@ -806,7 +805,6 @@ static CURLcode bearssl_connect_step3(struct Curl_cfilter *cf,
   struct ssl_connect_data *connssl = cf->ctx;
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
-  struct ssl_config_data *ssl_config = Curl_ssl_cf_get_config(cf, data);
   CURLcode ret;
 
   DEBUGASSERT(ssl_connect_3 == connssl->connecting_state);
@@ -821,7 +819,7 @@ static CURLcode bearssl_connect_step3(struct Curl_cfilter *cf,
                              proto ? strlen(proto) : 0);
   }
 
-  if(ssl_config->primary.cache_session) {
+  if(Curl_ssl_scache_use(cf, data)) {
     struct Curl_ssl_session *sc_session;
     br_ssl_session_parameters *session;
 
