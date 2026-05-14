@@ -854,7 +854,7 @@ static CURLcode bearssl_send(struct Curl_cfilter *cf, struct Curl_easy *data,
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
   unsigned char *app;
-  size_t applen, nwritten;
+  size_t applen;
   CURLcode result;
 
   DEBUGASSERT(backend);
