@@ -685,8 +685,7 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
     (struct bearssl_ssl_backend_data *)connssl->backend;
   unsigned state;
   unsigned char *buf;
-  size_t len;
-  ssize_t ret;
+  size_t len, nwritten, nread;
   CURLcode result;
   int err;
 
@@ -729,30 +728,30 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
       return CURLE_OK;
     if(state & BR_SSL_SENDREC) {
       buf = br_ssl_engine_sendrec_buf(&backend->ctx.eng, &len);
-      ret = Curl_conn_cf_send(cf->next, data, (const char *)buf, len, FALSE,
-                              &result);
-      CURL_TRC_CF(data, cf, "ssl_send(len=%zu) -> %zd, %d", len, ret, result);
-      if(ret <= 0) {
+      result = Curl_conn_cf_send(cf->next, data, buf, len, FALSE, &nwritten);
+      CURL_TRC_CF(data, cf, "ssl_send(len=%zu) -> %d, %zd", len, result,
+                  nwritten);
+      if(result != CURLE_OK) {
         if(result == CURLE_AGAIN)
           connssl->io_need |= CURL_SSL_IO_NEED_SEND;
         return result;
       }
-      br_ssl_engine_sendrec_ack(&backend->ctx.eng, ret);
+      br_ssl_engine_sendrec_ack(&backend->ctx.eng, nwritten);
     }
     else if(state & BR_SSL_RECVREC) {
       buf = br_ssl_engine_recvrec_buf(&backend->ctx.eng, &len);
-      ret = Curl_conn_cf_recv(cf->next, data, (char *)buf, len, &result);
-      CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %zd, %d", len, ret, result);
-      if(ret == 0) {
-        failf(data, "SSL: EOF without close notify");
-        return CURLE_RECV_ERROR;
-      }
-      if(ret <= 0) {
+      result = Curl_conn_cf_recv(cf->next, data, buf, len, &nread);
+      CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %d, %zd", len, result, nread);
+      if(result != CURLE_OK) {
         if(result == CURLE_AGAIN)
           connssl->io_need |= CURL_SSL_IO_NEED_RECV;
         return result;
       }
-      br_ssl_engine_recvrec_ack(&backend->ctx.eng, ret);
+      if(nread == 0) {
+        failf(data, "SSL: EOF without close notify");
+        return CURLE_RECV_ERROR;
+      }
+      br_ssl_engine_recvrec_ack(&backend->ctx.eng, nread);
     }
   }
 }
@@ -851,31 +850,32 @@ static CURLcode bearssl_connect_step3(struct Curl_cfilter *cf,
   return CURLE_OK;
 }
 
-static ssize_t bearssl_send(struct Curl_cfilter *cf, struct Curl_easy *data,
-                            const void *buf, size_t len, CURLcode *err)
+static CURLcode bearssl_send(struct Curl_cfilter *cf, struct Curl_easy *data,
+                             const void *buf, size_t len, size_t *pnwritten)
 {
   struct ssl_connect_data *connssl = cf->ctx;
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
   unsigned char *app;
-  size_t applen;
+  size_t applen, nwritten;
+  CURLcode result;
 
   DEBUGASSERT(backend);
+  *pnwritten = 0;
 
   for(;;) {
-    *err = bearssl_run_until(cf, data, BR_SSL_SENDAPP);
-    if(*err)
-      return -1;
+    result = bearssl_run_until(cf, data, BR_SSL_SENDAPP);
+    if(result != CURLE_OK)
+      return result;
     app = br_ssl_engine_sendapp_buf(&backend->ctx.eng, &applen);
     if(!app) {
       failf(data, "SSL: connection closed during write");
-      *err = CURLE_SEND_ERROR;
-      return -1;
+      return CURLE_SEND_ERROR;
     }
     if(backend->pending_write) {
-      applen = backend->pending_write;
+      *pnwritten = backend->pending_write;
       backend->pending_write = 0;
-      return applen;
+      return CURLE_OK;
     }
     if(applen > len)
       applen = len;
@@ -886,29 +886,32 @@ static ssize_t bearssl_send(struct Curl_cfilter *cf, struct Curl_easy *data,
   }
 }
 
-static ssize_t bearssl_recv(struct Curl_cfilter *cf, struct Curl_easy *data,
-                            char *buf, size_t len, CURLcode *err)
+static CURLcode bearssl_recv(struct Curl_cfilter *cf, struct Curl_easy *data,
+                             char *buf, size_t len, size_t *pnread)
 {
   struct ssl_connect_data *connssl = cf->ctx;
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
   unsigned char *app;
   size_t applen;
+  CURLcode result;
 
   DEBUGASSERT(backend);
+  *pnread = 0;
 
-  *err = bearssl_run_until(cf, data, BR_SSL_RECVAPP);
-  if(*err != CURLE_OK)
-    return -1;
+  result = bearssl_run_until(cf, data, BR_SSL_RECVAPP);
+  if(result != CURLE_OK)
+    return result;
   app = br_ssl_engine_recvapp_buf(&backend->ctx.eng, &applen);
   if(!app)
-    return 0;
+    return CURLE_OK;
   if(applen > len)
     applen = len;
   memcpy(buf, app, applen);
   br_ssl_engine_recvapp_ack(&backend->ctx.eng, applen);
+  *pnread = applen;
 
-  return applen;
+  return CURLE_OK;
 }
 
 static CURLcode bearssl_connect(struct Curl_cfilter *cf,
@@ -1094,7 +1097,6 @@ const struct Curl_ssl Curl_ssl_bearssl = {
   NULL,                            /* set_engine */
   NULL,                            /* set_engine_default */
   NULL,                            /* engines_list */
-  NULL,                            /* false_start */
   bearssl_sha256sum,               /* sha256sum */
   bearssl_recv,                    /* recv decrypted data */
   bearssl_send,                    /* send data to encrypt */
