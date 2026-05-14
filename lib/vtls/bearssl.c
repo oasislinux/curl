@@ -972,8 +972,8 @@ static bool bearssl_data_pending(struct Curl_cfilter *cf,
   return br_ssl_engine_current_state(&backend->ctx.eng) & BR_SSL_RECVAPP;
 }
 
-static CURLcode bearssl_random(struct Curl_easy *data UNUSED_PARAM,
-                               unsigned char *entropy, size_t length)
+static CURLcode bearssl_random(struct Curl_easy *data, unsigned char *entropy,
+                               size_t length)
 {
   static br_hmac_drbg_context ctx;
   static bool seeded = FALSE;
@@ -993,7 +993,7 @@ static CURLcode bearssl_random(struct Curl_easy *data UNUSED_PARAM,
 }
 
 static void *bearssl_get_internals(struct ssl_connect_data *connssl,
-                                   CURLINFO info UNUSED_PARAM)
+                                   CURLINFO info)
 {
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
@@ -1059,7 +1059,7 @@ static void bearssl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
 static CURLcode bearssl_sha256sum(const unsigned char *input,
                                   size_t inputlen,
                                   unsigned char *sha256sum,
-                                  size_t sha256len UNUSED_PARAM)
+                                  size_t sha256len)
 {
   br_sha256_context ctx;
 
