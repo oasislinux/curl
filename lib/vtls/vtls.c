@@ -1013,7 +1013,7 @@ static const struct Curl_ssl *available_backends[] = {
 #ifdef USE_SCHANNEL
   &Curl_ssl_schannel,
 #endif
-#if defined(USE_BEARSSL)
+#ifdef USE_BEARSSL
   &Curl_ssl_bearssl,
 #endif
 #ifdef USE_RUSTLS

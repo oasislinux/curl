@@ -419,7 +419,7 @@ static CURLcode test_unit3205(const char *arg)
     { 0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256",
               "RSA-PSK-CHACHA20-POLY1305" },
 #endif
-#if defined(USE_BEARSSL)
+#ifdef USE_BEARSSL
     { 0x000A, "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
               "DES-CBC3-SHA" },
     { 0xC003, "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",
@@ -516,7 +516,7 @@ static CURLcode test_unit3205(const char *arg)
     { 0x0000, "AES128-SHA" },
     { 0x0000, "AES256-SHA" },
 #endif
-#if defined(USE_BEARSSL)
+#ifdef USE_BEARSSL
     { 0x000A, "DES-CBC3-SHA" },
 #else
     { 0x0000, "DES-CBC3-SHA" },
