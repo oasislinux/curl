@@ -737,7 +737,7 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
     }
     else if(state & BR_SSL_RECVREC) {
       buf = br_ssl_engine_recvrec_buf(&backend->ctx.eng, &len);
-      result = Curl_conn_cf_recv(cf->next, data, buf, len, &nread);
+      result = Curl_conn_cf_recv(cf->next, data, (char *)buf, len, &nread);
       CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %d, %zd", len, result, nread);
       if(result != CURLE_OK) {
         if(result == CURLE_AGAIN)
