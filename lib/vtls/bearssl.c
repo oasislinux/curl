@@ -870,6 +870,10 @@ static CURLcode bearssl_send(struct Curl_cfilter *cf, struct Curl_easy *data,
       return CURLE_SEND_ERROR;
     }
     if(backend->pending_write) {
+      if (backend->pending_write > len) {
+        DEBUGASSERT(0);
+        return CURLE_BAD_FUNCTION_ARGUMENT;
+      }
       *pnwritten = backend->pending_write;
       backend->pending_write = 0;
       return CURLE_OK;
