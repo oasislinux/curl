@@ -38,7 +38,6 @@
 #include "../connect.h"
 #include "../select.h"
 #include "../multiif.h"
-#include "../curl_printf.h"
 
 /* The last #include files should be: */
 #include "../curl_memory.h"
@@ -959,7 +958,7 @@ static CURLcode bearssl_connect(struct Curl_cfilter *cf,
 
 static size_t bearssl_version(char *buffer, size_t size)
 {
-  return msnprintf(buffer, size, "BearSSL");
+  return curl_msnprintf(buffer, size, "BearSSL");
 }
 
 static bool bearssl_data_pending(struct Curl_cfilter *cf,
