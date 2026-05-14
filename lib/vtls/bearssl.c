@@ -30,7 +30,7 @@
 #include "bearssl.h"
 #include "cipher_suite.h"
 #include "../urldata.h"
-#include "../sendf.h"
+#include "../curl_trc.h"
 #include "../curlx/fopen.h"
 #include "../curlx/inet_pton.h"
 #include "vtls.h"
