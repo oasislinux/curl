@@ -31,6 +31,7 @@
 #include "cipher_suite.h"
 #include "../urldata.h"
 #include "../sendf.h"
+#include "../curlx/fopen.h"
 #include "../curlx/inet_pton.h"
 #include "vtls.h"
 #include "vtls_int.h"
@@ -129,7 +130,7 @@ static CURLcode load_cafile(struct cafile_source *source,
               || source->type == CAFILE_SOURCE_BLOB);
 
   if(source->type == CAFILE_SOURCE_PATH) {
-    fp = fopen(source->data, "rb");
+    fp = curlx_fopen(source->data, "rb");
     if(!fp)
       return CURLE_SSL_CACERT_BADFILE;
   }
@@ -251,7 +252,7 @@ static CURLcode load_cafile(struct cafile_source *source,
 
 fail:
   if(fp)
-    fclose(fp);
+    curlx_fclose(fp);
   if(ca.err == CURLE_OK) {
     *anchors = ca.anchors;
     *anchors_len = ca.anchors_len;
