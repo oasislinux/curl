@@ -37,7 +37,6 @@
 #include "vtls_int.h"
 #include "vtls_scache.h"
 #include "../connect.h"
-#include "../select.h"
 #include "../multiif.h"
 
 /* The last #include files should be: */
