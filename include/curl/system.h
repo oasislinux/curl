@@ -353,13 +353,26 @@
 #  define CURL_PULL_SYS_SOCKET_H     1
 
 #else
+#  ifdef __LP64__
+#    define CURL_TYPEOF_CURL_OFF_T     long
+#    define CURL_FORMAT_CURL_OFF_T     "ld"
+#    define CURL_FORMAT_CURL_OFF_TU    "lu"
+#    define CURL_SUFFIX_CURL_OFF_T     L
+#    define CURL_SUFFIX_CURL_OFF_TU    UL
+#  else
 /* generic "safe guess" on old 32-bit style */
-#  define CURL_TYPEOF_CURL_OFF_T     long long
-#  define CURL_FORMAT_CURL_OFF_T     "lld"
-#  define CURL_FORMAT_CURL_OFF_TU    "llu"
-#  define CURL_SUFFIX_CURL_OFF_T     LL
-#  define CURL_SUFFIX_CURL_OFF_TU    ULL
-#  define CURL_TYPEOF_CURL_SOCKLEN_T int
+#    define CURL_TYPEOF_CURL_OFF_T     long long
+#    define CURL_FORMAT_CURL_OFF_T     "lld"
+#    define CURL_FORMAT_CURL_OFF_TU    "llu"
+#    define CURL_SUFFIX_CURL_OFF_T     LL
+#    define CURL_SUFFIX_CURL_OFF_TU    ULL
+#  endif
+#  ifdef __unix__
+#    define CURL_TYPEOF_CURL_SOCKLEN_T socklen_t
+#    define CURL_PULL_SYS_SOCKET_H     1
+#  else
+#    define CURL_TYPEOF_CURL_SOCKLEN_T int
+#  endif
 #endif
 
 #ifdef _AIX
