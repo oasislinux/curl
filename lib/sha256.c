@@ -45,6 +45,7 @@
  * 4. USE_MBEDTLS
  * 5. USE_COMMON_CRYPTO
  * 6. USE_WIN32_CRYPTO
+ * 7. USE_BEARSSL
  *
  * This ensures that the same SSL branch gets activated throughout this source
  * file even if multiple backends are enabled at the same time.
@@ -236,6 +237,29 @@ static void my_sha256_final(unsigned char *digest, void *in)
 
   if(ctx->hCryptProv)
     CryptReleaseContext(ctx->hCryptProv, 0);
+}
+
+#elif defined(USE_BEARSSL)
+#include <bearssl.h>
+
+typedef br_sha256_context my_sha256_ctx;
+
+static CURLcode my_sha256_init(void *ctx)
+{
+  br_sha256_init(ctx);
+  return CURLE_OK;
+}
+
+static void my_sha256_update(void *ctx,
+                             const unsigned char *data,
+                             unsigned int length)
+{
+  br_sha256_update(ctx, data, length);
+}
+
+static void my_sha256_final(unsigned char *digest, void *ctx)
+{
+  br_sha256_out(ctx, digest);
 }
 
 #else
