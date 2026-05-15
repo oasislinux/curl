@@ -148,7 +148,7 @@ static CURLcode load_cafile(struct cafile_source *source,
     }
     else if(source->type == CAFILE_SOURCE_BLOB) {
       n = source->len;
-      p = (const unsigned char *) source->data;
+      p = (const unsigned char *)source->data;
     }
     while(n) {
       pushed = br_pem_decoder_push(&pc, p, n);
