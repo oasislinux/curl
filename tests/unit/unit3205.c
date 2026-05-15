@@ -38,6 +38,7 @@ static CURLcode test_unit3205(const char *arg)
   };
 
   static const struct test_cs_entry test_cs_list[] = {
+#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
     { 0x1301, "TLS_AES_128_GCM_SHA256",
               NULL },
     { 0x1302, "TLS_AES_256_GCM_SHA384",
@@ -48,6 +49,7 @@ static CURLcode test_unit3205(const char *arg)
               NULL },
     { 0x1305, "TLS_AES_128_CCM_8_SHA256",
               NULL },
+#endif
     { 0xC02B, "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
               "ECDHE-ECDSA-AES128-GCM-SHA256" },
     { 0xC02C, "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
@@ -113,6 +115,8 @@ static CURLcode test_unit3205(const char *arg)
               "ECDH-RSA-AES128-GCM-SHA256" },
     { 0xC032, "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384",
               "ECDH-RSA-AES256-GCM-SHA384" },
+#endif
+#ifdef USE_MBEDTLS
     { 0x0001, "TLS_RSA_WITH_NULL_MD5",
               "NULL-MD5" },
     { 0x0002, "TLS_RSA_WITH_NULL_SHA",
@@ -199,6 +203,20 @@ static CURLcode test_unit3205(const char *arg)
               "ECDHE-PSK-AES256-CBC-SHA" },
     { 0xCCAB, "TLS_PSK_WITH_CHACHA20_POLY1305_SHA256",
               "PSK-CHACHA20-POLY1305" },
+#endif
+#ifdef USE_BEARSSL
+    { 0x000A, "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+              "DES-CBC3-SHA" },
+    { 0xC003, "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDH-ECDSA-DES-CBC3-SHA" },
+    { 0xC008, "TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDHE-ECDSA-DES-CBC3-SHA" },
+    { 0xC00D, "TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDH-RSA-DES-CBC3-SHA" },
+    { 0xC012, "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",
+              "ECDHE-RSA-DES-CBC3-SHA" },
+#endif
+#if defined(USE_BEARSSL) || defined(USE_MBEDTLS)
     { 0xC09C, "TLS_RSA_WITH_AES_128_CCM",
               "AES128-CCM" },
     { 0xC09D, "TLS_RSA_WITH_AES_256_CCM",
@@ -215,6 +233,8 @@ static CURLcode test_unit3205(const char *arg)
               "ECDHE-ECDSA-AES128-CCM8" },
     { 0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8",
               "ECDHE-ECDSA-AES256-CCM8" },
+#endif
+#ifdef USE_MBEDTLS
     /* entries marked ns are non-"standard", they are not in OpenSSL */
     { 0x0041, "TLS_RSA_WITH_CAMELLIA_128_CBC_SHA",
               "CAMELLIA128-SHA" },
@@ -419,18 +439,6 @@ static CURLcode test_unit3205(const char *arg)
     { 0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256",
               "RSA-PSK-CHACHA20-POLY1305" },
 #endif
-#ifdef USE_BEARSSL
-    { 0x000A, "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
-              "DES-CBC3-SHA" },
-    { 0xC003, "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",
-              "ECDH-ECDSA-DES-CBC3-SHA" },
-    { 0xC008, "TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA",
-              "ECDHE-ECDSA-DES-CBC3-SHA" },
-    { 0xC00D, "TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA",
-              "ECDH-RSA-DES-CBC3-SHA" },
-    { 0xC012, "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",
-              "ECDHE-RSA-DES-CBC3-SHA" },
-#endif
   };
 
   static const char *cs_test_string =
@@ -578,11 +586,11 @@ static CURLcode test_unit3205(const char *arg)
     if(test->id >= 0x0011 && test->id < 0x0017) {
       if(expect && memcmp(expect, "EDH-", 4) == 0) {
         curlx_strcopy(alt, sizeof(alt), expect, strlen(expect));
-        expect = (char *)memcpy(alt, "DHE-", 4);
+        expect = (const char *)memcpy(alt, "DHE-", sizeof("DHE-") - 1);
       }
       if(expect && memcmp(expect + 4, "EDH-", 4) == 0) {
         curlx_strcopy(alt, sizeof(alt), expect, strlen(expect));
-        expect = (char *)memcpy(alt + 4, "DHE-", 4) - 4;
+        expect = (const char *)memcpy(alt + 4, "DHE-", sizeof("DHE-") - 1) - 4;
       }
     }
 
