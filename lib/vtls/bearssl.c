@@ -32,7 +32,6 @@
 #include "../urldata.h"
 #include "../curl_trc.h"
 #include "../curlx/fopen.h"
-#include "../curlx/inet_pton.h"
 #include "vtls.h"
 #include "vtls_int.h"
 #include "vtls_scache.h"
