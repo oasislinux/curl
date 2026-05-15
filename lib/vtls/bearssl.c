@@ -38,10 +38,6 @@
 #include "../connect.h"
 #include "../multiif.h"
 
-/* The last #include files should be: */
-#include "../curl_memory.h"
-#include "../memdebug.h"
-
 struct x509_context {
   const br_x509_class *vtable;
   br_x509_minimal_context minimal;
@@ -182,8 +178,8 @@ static CURLcode load_cafile(struct cafile_source *source,
           goto fail;
         }
         new_anchors_len = ca.anchors_len + 1;
-        new_anchors = realloc(ca.anchors,
-                              new_anchors_len * sizeof(ca.anchors[0]));
+        new_anchors = curlx_realloc(ca.anchors,
+                                    new_anchors_len * sizeof(ca.anchors[0]));
         if(!new_anchors) {
           ca.err = CURLE_OUT_OF_MEMORY;
           goto fail;
@@ -217,7 +213,7 @@ static CURLcode load_cafile(struct cafile_source *source,
         }
 
         /* fill in trust anchor DN and public key data */
-        ta->dn.data = malloc(ta_size);
+        ta->dn.data = curlx_malloc(ta_size);
         if(!ta->dn.data) {
           ca.err = CURLE_OUT_OF_MEMORY;
           goto fail;
@@ -257,8 +253,8 @@ fail:
   }
   else {
     for(i = 0; i < ca.anchors_len; ++i)
-      free(ca.anchors[i].dn.data);
-    free(ca.anchors);
+      curlx_free(ca.anchors[i].dn.data);
+    curlx_free(ca.anchors);
   }
 
   return ca.err;
@@ -821,7 +817,7 @@ static CURLcode bearssl_connect_step3(struct Curl_cfilter *cf,
     struct Curl_ssl_session *sc_session;
     br_ssl_session_parameters *session;
 
-    session = malloc(sizeof(*session));
+    session = curlx_malloc(sizeof(*session));
     if(!session)
       return CURLE_OUT_OF_MEMORY;
     br_ssl_engine_get_session_parameters(&backend->ctx.eng, session);
@@ -1051,7 +1047,7 @@ static void bearssl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
   backend->active = FALSE;
   if(backend->anchors) {
     for(i = 0; i < backend->anchors_len; ++i)
-      free(backend->anchors[i].dn.data);
+      curlx_free(backend->anchors[i].dn.data);
     Curl_safefree(backend->anchors);
   }
 }
