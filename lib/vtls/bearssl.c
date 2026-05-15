@@ -41,7 +41,6 @@
 struct x509_context {
   const br_x509_class *vtable;
   br_x509_minimal_context minimal;
-  br_x509_decoder_context decoder;
   unsigned err;
   bool verifyhost;
   bool verifypeer;
@@ -268,8 +267,6 @@ static void x509_start_chain(const br_x509_class **ctx,
 
   x509->err = 0;
   x509->cert_num = 0;
-  if(!x509->verifypeer)
-    return;
 
   if(!x509->verifyhost)
     server_name = NULL;
@@ -286,12 +283,10 @@ static void x509_start_cert(const br_x509_class **ctx, uint32_t length)
     x509->err = BR_ERR_X509_LIMIT_EXCEEDED;
     return;
   }
-  if(!x509->verifypeer) {
-    /* Only decode the first cert in the chain to obtain the public key */
-    if(x509->cert_num == 0)
-      br_x509_decoder_init(&x509->decoder, NULL, NULL);
-    return;
-  }
+
+  /* Only decode the first cert in the chain to obtain the public key */
+  if(!x509->verifypeer && x509->cert_num != 0)
+      return;
 
   x509->minimal.vtable->start_cert(&x509->minimal.vtable, length);
 }
@@ -303,11 +298,8 @@ static void x509_append(const br_x509_class **ctx, const unsigned char *buf,
 
   if(x509->err)
     return;
-  if(!x509->verifypeer) {
-    if(x509->cert_num == 0)
-      br_x509_decoder_push(&x509->decoder, buf, len);
-    return;
-  }
+  if(!x509->verifypeer && x509->cert_num != 0)
+      return;
 
   x509->minimal.vtable->append(&x509->minimal.vtable, buf, len);
 }
@@ -319,11 +311,8 @@ static void x509_end_cert(const br_x509_class **ctx)
   if(x509->err)
     return;
   x509->cert_num++;
-  if(!x509->verifypeer) {
-    if(x509->cert_num == 1)
-      x509->err = (unsigned)br_x509_decoder_last_error(&x509->decoder);
-    return;
-  }
+  if(!x509->verifypeer && x509->cert_num != 1)
+      return;
 
   x509->minimal.vtable->end_cert(&x509->minimal.vtable);
 }
@@ -332,25 +321,21 @@ static unsigned x509_end_chain(const br_x509_class **ctx)
 {
   struct x509_context *x509 = (struct x509_context *)ctx;
 
-  if(x509->err || !x509->verifypeer)
-    return x509->err;
-
-  return x509->minimal.vtable->end_chain(&x509->minimal.vtable);
+  if(!x509->err) {
+    x509->err = x509->minimal.vtable->end_chain(&x509->minimal.vtable);
+    if(!x509->verifypeer && x509->err == BR_ERR_X509_NOT_TRUSTED)
+      x509->err = 0;
+  }
+  return x509->err;
 }
 
 static const br_x509_pkey *x509_get_pkey(const br_x509_class *const *ctx,
                                          unsigned *usages)
 {
-  struct x509_context *x509 = (struct x509_context *)CURL_UNCONST(ctx);
+  const struct x509_context *x509 = (const struct x509_context *)ctx;
 
-  if(!x509->verifypeer) {
-    /* Nothing in the chain is verified, return the public key of the
-     * first certificate and allow its usage for both TLS_RSA_* and
-     * TLS_ECDHE_* */
-    if(usages)
-      *usages = BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN;
-    return br_x509_decoder_get_pkey(&x509->decoder);
-  }
+  if(x509->err)
+    return NULL;
 
   return x509->minimal.vtable->get_pkey(&x509->minimal.vtable, usages);
 }
@@ -364,6 +349,16 @@ static const br_x509_class x509_vtable = {
   x509_end_chain,
   x509_get_pkey
 };
+
+static int noverifypeer_time_cb(void *aux,
+                                uint32_t not_before_days,
+                                uint32_t not_before_seconds,
+                                uint32_t not_after_days,
+                                uint32_t not_after_seconds)
+{
+  /* Skip time verification with !verifypeer */
+  return 0;
+}
 
 static CURLcode
 bearssl_set_ssl_version_min_max(struct Curl_easy *data,
@@ -609,6 +604,10 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
   backend->x509.vtable = &x509_vtable;
   backend->x509.verifypeer = verifypeer;
   backend->x509.verifyhost = verifyhost;
+#ifdef BR_FEATURE_X509_TIME_CALLBACK
+  if(!verifypeer)
+    br_x509_minimal_set_time_callback(&backend->x509.minimal, NULL, &noverifypeer_time_cb);
+#endif
   br_ssl_engine_set_x509(&backend->ctx.eng, &backend->x509.vtable);
 
   if(Curl_ssl_scache_use(cf, data)) {
