@@ -1060,7 +1060,7 @@ static void bearssl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
   if(backend->anchors) {
     for(i = 0; i < backend->anchors_len; ++i)
       curlx_free(backend->anchors[i].dn.data);
-    Curl_safefree(backend->anchors);
+    curlx_safefree(backend->anchors);
   }
 }
 
