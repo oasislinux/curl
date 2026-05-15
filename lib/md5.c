@@ -223,6 +223,28 @@ static void my_md5_final(unsigned char *digest, void *in)
     CryptReleaseContext(ctx->hCryptProv, 0);
 }
 
+#elif defined(USE_BEARSSL)
+#include <bearssl.h>
+
+typedef br_md5_context my_md5_ctx;
+
+static CURLcode my_md5_init(void *ctx)
+{
+  br_md5_init(ctx);
+  return CURLE_OK;
+}
+
+static void my_md5_update(void *ctx,
+                          const unsigned char *input, unsigned int len)
+{
+  br_md5_update(ctx, input, len);
+}
+
+static void my_md5_final(unsigned char *digest, void *ctx)
+{
+  br_md5_out(ctx, digest);
+}
+
 #else
 
 /* When no other crypto library is available we use this code segment */
