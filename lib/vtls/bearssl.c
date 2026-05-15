@@ -344,9 +344,9 @@ static const br_x509_pkey *x509_get_pkey(const br_x509_class *const *ctx,
   struct x509_context *x509 = (struct x509_context *)CURL_UNCONST(ctx);
 
   if(!x509->verifypeer) {
-    /* Nothing in the chain is verified, just return the public key of the
-       first certificate and allow its usage for both TLS_RSA_* and
-       TLS_ECDHE_* */
+    /* Nothing in the chain is verified, return the public key of the
+     * first certificate and allow its usage for both TLS_RSA_* and
+     * TLS_ECDHE_* */
     if(usages)
       *usages = BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN;
     return br_x509_decoder_get_pkey(&x509->decoder);
