@@ -42,6 +42,7 @@ struct x509_context {
   const br_x509_class *vtable;
   br_x509_minimal_context minimal;
   br_x509_decoder_context decoder;
+  unsigned err;
   bool verifyhost;
   bool verifypeer;
   int cert_num;
@@ -265,10 +266,10 @@ static void x509_start_chain(const br_x509_class **ctx,
 {
   struct x509_context *x509 = (struct x509_context *)ctx;
 
-  if(!x509->verifypeer) {
-    x509->cert_num = 0;
+  x509->err = 0;
+  x509->cert_num = 0;
+  if(!x509->verifypeer)
     return;
-  }
 
   if(!x509->verifyhost)
     server_name = NULL;
@@ -279,6 +280,12 @@ static void x509_start_cert(const br_x509_class **ctx, uint32_t length)
 {
   struct x509_context *x509 = (struct x509_context *)ctx;
 
+  if(x509->err)
+    return;
+  if(x509->cert_num >= MAX_ALLOWED_CERT_AMOUNT) {
+    x509->err = BR_ERR_X509_LIMIT_EXCEEDED;
+    return;
+  }
   if(!x509->verifypeer) {
     /* Only decode the first cert in the chain to obtain the public key */
     if(x509->cert_num == 0)
@@ -294,6 +301,8 @@ static void x509_append(const br_x509_class **ctx, const unsigned char *buf,
 {
   struct x509_context *x509 = (struct x509_context *)ctx;
 
+  if(x509->err)
+    return;
   if(!x509->verifypeer) {
     if(x509->cert_num == 0)
       br_x509_decoder_push(&x509->decoder, buf, len);
@@ -307,8 +316,12 @@ static void x509_end_cert(const br_x509_class **ctx)
 {
   struct x509_context *x509 = (struct x509_context *)ctx;
 
+  if(x509->err)
+    return;
+  x509->cert_num++;
   if(!x509->verifypeer) {
-    x509->cert_num++;
+    if(x509->cert_num == 1)
+      x509->err = (unsigned)br_x509_decoder_last_error(&x509->decoder);
     return;
   }
 
@@ -319,9 +332,8 @@ static unsigned x509_end_chain(const br_x509_class **ctx)
 {
   struct x509_context *x509 = (struct x509_context *)ctx;
 
-  if(!x509->verifypeer) {
-    return (unsigned)br_x509_decoder_last_error(&x509->decoder);
-  }
+  if(x509->err || !x509->verifypeer)
+    return x509->err;
 
   return x509->minimal.vtable->end_chain(&x509->minimal.vtable);
 }
