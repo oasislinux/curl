@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
-#include "../curl_setup.h"
+#include "curl_setup.h"
 
 #ifdef USE_BEARSSL
 
@@ -29,14 +29,14 @@
 
 #include "bearssl.h"
 #include "cipher_suite.h"
-#include "../urldata.h"
-#include "../curl_trc.h"
-#include "../curlx/fopen.h"
+#include "urldata.h"
+#include "curl_trc.h"
+#include "curlx/fopen.h"
 #include "vtls.h"
 #include "vtls_int.h"
 #include "vtls_scache.h"
-#include "../connect.h"
-#include "../multiif.h"
+#include "connect.h"
+#include "multiif.h"
 
 struct x509_context {
   const br_x509_class *vtable;
