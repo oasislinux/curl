@@ -735,7 +735,6 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
         failf(data, "SSL: X.509 verification: "
               "chain could not be linked to a trust anchor");
         return CURLE_PEER_FAILED_VERIFICATION;
-      default:;
       }
       failf(data, "BearSSL: connection error 0x%04x", err);
       /* X.509 errors are documented to have the range 32..63 */
