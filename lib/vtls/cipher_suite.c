@@ -128,7 +128,7 @@ enum {
   CS_TXT_IDX_CAMELLIA128,
   CS_TXT_IDX_CAMELLIA256,
 #endif
-  CS_TXT_LEN,
+  CS_TXT_LEN
 };
 
 #define CS_ZIP_IDX(a, b, c, d, e, f, g, h)            \
