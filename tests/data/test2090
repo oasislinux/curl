@@ -25,6 +25,7 @@ MooMoo
 SSL
 !Schannel
 !mbedtls
+!bearssl
 </features>
 <setenv>
 SSLKEYLOGFILE=%LOGDIR/%TESTNUMBER.log.ssl
