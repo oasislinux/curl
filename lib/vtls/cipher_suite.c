@@ -709,4 +709,4 @@ int Curl_cipher_suite_get_str(uint16_t id, char *buf, size_t buf_size,
   return r;
 }
 
-#endif /* defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS) */
+#endif /* USE_MBEDTLS || USE_BEARSSL || USE_RUSTLS */
