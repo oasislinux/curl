@@ -354,15 +354,23 @@ static const br_x509_class x509_vtable = {
   x509_get_pkey
 };
 
+#ifdef BR_FEATURE_X509_TIME_CALLBACK
 static int noverifypeer_time_cb(void *aux,
                                 uint32_t not_before_days,
                                 uint32_t not_before_seconds,
                                 uint32_t not_after_days,
                                 uint32_t not_after_seconds)
 {
+  (void)aux;
+  (void)not_before_days;
+  (void)not_before_seconds;
+  (void)not_after_days;
+  (void)not_after_seconds;
+
   /* Skip time verification with !verifypeer */
   return 0;
 }
+#endif
 
 static CURLcode
 bearssl_set_ssl_version_min_max(struct Curl_easy *data,
@@ -996,6 +1004,7 @@ static CURLcode bearssl_random(struct Curl_easy *data, unsigned char *entropy,
   static br_hmac_drbg_context ctx;
   static bool seeded = FALSE;
 
+  (void)data;
   if(!seeded) {
     br_prng_seeder seeder;
 
@@ -1015,6 +1024,8 @@ static void *bearssl_get_internals(struct ssl_connect_data *connssl,
 {
   struct bearssl_ssl_backend_data *backend =
     (struct bearssl_ssl_backend_data *)connssl->backend;
+
+  (void)info;
   DEBUGASSERT(backend);
   return &backend->ctx;
 }
@@ -1081,6 +1092,8 @@ static CURLcode bearssl_sha256sum(const unsigned char *input,
 {
   br_sha256_context ctx;
 
+  (void)sha256len;
+  DEBUGASSERT(sha256len == br_sha256_SIZE);
   br_sha256_init(&ctx);
   br_sha256_update(&ctx, input, inputlen);
   br_sha256_out(&ctx, sha256sum);
