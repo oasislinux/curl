@@ -543,7 +543,7 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
   const char * const ssl_cafile =
     /* CURLOPT_CAINFO_BLOB overrides CURLOPT_CAINFO */
     (ca_info_blob ? NULL : conn_config->CAfile);
-  const char *hostname = connssl->peer.hostname;
+  const char *hostname;
   const bool verifypeer = conn_config->verifypeer;
   const bool verifyhost = conn_config->verifyhost;
   CURLcode ret;
