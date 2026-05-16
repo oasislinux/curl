@@ -287,9 +287,10 @@ static void x509_start_cert(const br_x509_class **ctx, uint32_t length)
     x509->err = BR_ERR_X509_LIMIT_EXCEEDED;
     return;
   }
+  x509->cert_num++;
 
   /* Only decode the first cert in the chain to obtain the public key */
-  if(!x509->verifypeer && x509->cert_num != 0)
+  if(!x509->verifypeer && x509->cert_num != 1)
     return;
 
   x509->minimal.vtable->start_cert(&x509->minimal.vtable, length);
@@ -302,7 +303,7 @@ static void x509_append(const br_x509_class **ctx, const unsigned char *buf,
 
   if(x509->err)
     return;
-  if(!x509->verifypeer && x509->cert_num != 0)
+  if(!x509->verifypeer && x509->cert_num != 1)
     return;
 
   x509->minimal.vtable->append(&x509->minimal.vtable, buf, len);
@@ -314,7 +315,6 @@ static void x509_end_cert(const br_x509_class **ctx)
 
   if(x509->err)
     return;
-  x509->cert_num++;
   if(!x509->verifypeer && x509->cert_num != 1)
     return;
 
