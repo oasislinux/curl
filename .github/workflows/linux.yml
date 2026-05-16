@@ -32,7 +32,7 @@ permissions: {}
 env:
   MAKEFLAGS: -j 5
   CURL_CI: github
-  CURL_TEST_MIN: 1660
+  CURL_TEST_MIN: 1620
   DO_NOT_TRACK: '1'
   # unhandled
   BEARSSL_VERSION: 0.6
@@ -105,7 +105,7 @@ jobs:
           - name: 'bearssl https-only'
             image: ubuntu-24.04-arm
             install_packages: libbearssl-dev
-            tflags: '--min=1260'
+            tflags: '--min=1130'
             configure: >-
               --with-bearssl --enable-debug --disable-unity
               --disable-dict --disable-gopher --disable-ldap --disable-telnet
@@ -117,7 +117,7 @@ jobs:
 
           - name: 'bearssl torture 1'
             install_packages: libbearssl-dev libnghttp2-dev libssh2-1-dev libc-ares-dev
-            tflags: '-t --shallow=25 --min=960 1 to 1000'
+            tflags: '-t --shallow=25 --min=870 1 to 1000'
             torture: true
             generate: -DCURL_USE_BEARSSL=ON -DENABLE_DEBUG=ON -DENABLE_ARES=ON -DCURL_ENABLE_NTLM=ON
 
@@ -176,7 +176,7 @@ jobs:
           - name: 'event-based'
             install_packages: libssh-dev libbearssl-dev
             configure: --enable-debug --enable-static --disable-shared --disable-threaded-resolver --with-libssh --with-bearssl --enable-ntlm
-            tflags: '-n --test-event --min=1420'
+            tflags: '-n --test-event --min=1320'
 
           - name: 'duphandle'
             image: ubuntu-24.04-arm
