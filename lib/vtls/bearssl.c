@@ -290,7 +290,7 @@ static void x509_start_cert(const br_x509_class **ctx, uint32_t length)
 
   /* Only decode the first cert in the chain to obtain the public key */
   if(!x509->verifypeer && x509->cert_num != 0)
-      return;
+    return;
 
   x509->minimal.vtable->start_cert(&x509->minimal.vtable, length);
 }
@@ -303,7 +303,7 @@ static void x509_append(const br_x509_class **ctx, const unsigned char *buf,
   if(x509->err)
     return;
   if(!x509->verifypeer && x509->cert_num != 0)
-      return;
+    return;
 
   x509->minimal.vtable->append(&x509->minimal.vtable, buf, len);
 }
@@ -316,7 +316,7 @@ static void x509_end_cert(const br_x509_class **ctx)
     return;
   x509->cert_num++;
   if(!x509->verifypeer && x509->cert_num != 1)
-      return;
+    return;
 
   x509->minimal.vtable->end_cert(&x509->minimal.vtable);
 }
@@ -608,7 +608,8 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
                        backend->anchors, backend->anchors_len);
 #ifdef BR_FEATURE_X509_TIME_CALLBACK
   if(!verifypeer)
-    br_x509_minimal_set_time_callback(&backend->x509.minimal, NULL, &noverifypeer_time_cb);
+    br_x509_minimal_set_time_callback(&backend->x509.minimal, NULL,
+                                      &noverifypeer_time_cb);
 #endif
   br_x509_minimal_set_rsa(&backend->x509.minimal,
                           br_ssl_engine_get_rsavrfy(&backend->ctx.eng));
@@ -751,7 +752,8 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
     else if(state & BR_SSL_RECVREC) {
       buf = br_ssl_engine_recvrec_buf(&backend->ctx.eng, &len);
       result = Curl_conn_cf_recv(cf->next, data, (char *)buf, len, &nread);
-      CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %d, %zd", len, result, nread);
+      CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %d, %zd", len, result,
+                  nread);
       if(result != CURLE_OK) {
         if(result == CURLE_AGAIN)
           connssl->io_need |= CURL_SSL_IO_NEED_RECV;
@@ -882,7 +884,7 @@ static CURLcode bearssl_send(struct Curl_cfilter *cf, struct Curl_easy *data,
       return CURLE_SEND_ERROR;
     }
     if(backend->pending_write) {
-      if (backend->pending_write > len) {
+      if(backend->pending_write > len) {
         DEBUGASSERT(0);
         return CURLE_BAD_FUNCTION_ARGUMENT;
       }
