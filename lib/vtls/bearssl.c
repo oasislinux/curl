@@ -119,6 +119,7 @@ static CURLcode load_cafile(struct cafile_source *source,
   const unsigned char *p = NULL;
   const char *name;
   size_t n = 0, i, pushed;
+  bool done;
 
   DEBUGASSERT(source->type == CAFILE_SOURCE_PATH
               || source->type == CAFILE_SOURCE_BLOB);
@@ -128,6 +129,9 @@ static CURLcode load_cafile(struct cafile_source *source,
     if(!fp)
       return CURLE_SSL_CACERT_BADFILE;
   }
+  else {
+    fp = NULL;
+  }
 
   ca.err = CURLE_OK;
   ca.in_cert = FALSE;
@@ -136,15 +140,15 @@ static CURLcode load_cafile(struct cafile_source *source,
   br_pem_decoder_init(&pc);
   br_pem_decoder_setdest(&pc, x509_push, &ca);
   do {
-    if(source->type == CAFILE_SOURCE_PATH) {
+    if(fp) {
       n = fread(buf, 1, sizeof(buf), fp);
-      if(n == 0)
-        break;
       p = buf;
+      done = n < sizeof(buf);
     }
-    else if(source->type == CAFILE_SOURCE_BLOB) {
+    else {
       n = source->len;
       p = (const unsigned char *)source->data;
+      done = TRUE;
     }
     while(n) {
       pushed = br_pem_decoder_push(&pc, p, n);
@@ -238,7 +242,7 @@ static CURLcode load_cafile(struct cafile_source *source,
         goto fail;
       }
     }
-  } while(source->type != CAFILE_SOURCE_BLOB);
+  } while(!done);
   if(fp && ferror(fp))
     ca.err = CURLE_READ_ERROR;
   else if(ca.in_cert)
