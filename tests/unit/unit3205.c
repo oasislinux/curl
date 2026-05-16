@@ -451,9 +451,15 @@ static CURLcode test_unit3205(const char *arg)
     const char *str;
   };
   static const struct test_str_entry test_str_list[] = {
+#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
     { 0x1301, "TLS_AES_128_GCM_SHA256" },
     { 0x1302, "TLS_AES_256_GCM_SHA384" },
     { 0x1303, "TLS_CHACHA20_POLY1305_SHA256" },
+#else
+    { 0x0000, "TLS_AES_128_GCM_SHA256" },
+    { 0x0000, "TLS_AES_256_GCM_SHA384" },
+    { 0x0000, "TLS_CHACHA20_POLY1305_SHA256" },
+#endif
     { 0xC02B, "ECDHE-ECDSA-AES128-GCM-SHA256" },
     { 0xC02F, "ECDHE-RSA-AES128-GCM-SHA256" },
     { 0xC02C, "ECDHE-ECDSA-AES256-GCM-SHA384" },
