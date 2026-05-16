@@ -46,7 +46,7 @@ my @double_empty_lines = (
     '^projects/OS400/',
     '^projects/vms/',
     '^tests/data/test',
-    '\.(m4|py)$',
+    '\.(m4|py|[1-9])$',
 );
 
 my @longline = (
@@ -56,6 +56,7 @@ my @longline = (
     '^projects/Windows/tmpl/.+\.vcxproj$',
     '^tests/certs/srp-verifier-',
     '^tests/data/test',
+    '\.[1-9]$',
 );
 
 my @non_ascii_allowed = (
