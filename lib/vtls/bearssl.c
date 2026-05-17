@@ -497,6 +497,26 @@ static CURLcode bearssl_set_selected_ciphers(struct Curl_easy *data,
   return CURLE_OK;
 }
 
+static void bearssl_set_hashes(br_ssl_engine_context *eng,
+                               br_x509_minimal_context *x509)
+{
+  static const struct {
+    int id;
+    const br_hash_class *class;
+  } hashes[] = {
+    {br_sha224_ID, &br_sha224_vtable},
+    {br_sha256_ID, &br_sha256_vtable},
+    {br_sha384_ID, &br_sha384_vtable},
+    {br_sha512_ID, &br_sha512_vtable},
+  };
+  size_t i;
+
+  for(i = 0; i < CURL_ARRAYSIZE(hashes); i++) {
+    br_ssl_engine_set_hash(eng, hashes[i].id, hashes[i].class);
+    br_x509_minimal_set_hash(x509, hashes[i].id, hashes[i].class);
+  }
+}
+
 static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
                                       struct Curl_easy *data)
 {
@@ -549,8 +569,16 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
   }
 
   /* initialize SSL context */
-  br_ssl_client_init_full(&backend->ctx, &backend->x509.minimal,
-                          backend->anchors, backend->anchors_len);
+  br_ssl_client_zero(&backend->ctx);
+  br_ssl_client_set_default_rsapub(&backend->ctx);
+  br_ssl_engine_set_default_rsavrfy(&backend->ctx.eng);
+  br_ssl_engine_set_default_ecdsa(&backend->ctx.eng);
+  br_ssl_engine_set_prf_sha256(&backend->ctx.eng, &br_tls12_sha256_prf);
+  br_ssl_engine_set_prf_sha384(&backend->ctx.eng, &br_tls12_sha384_prf);
+  br_ssl_engine_set_default_aes_cbc(&backend->ctx.eng);
+  br_ssl_engine_set_default_aes_ccm(&backend->ctx.eng);
+  br_ssl_engine_set_default_aes_gcm(&backend->ctx.eng);
+  br_ssl_engine_set_default_chapol(&backend->ctx.eng);
 
   ret = bearssl_set_ssl_version_min_max(data, &backend->ctx.eng, conn_config);
   if(ret != CURLE_OK)
@@ -576,11 +604,20 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
   backend->x509.vtable = &x509_vtable;
   backend->x509.verifypeer = verifypeer;
   backend->x509.verifyhost = verifyhost;
+  br_x509_minimal_init(&backend->x509.minimal, &br_sha256_vtable,
+                       backend->anchors, backend->anchors_len);
 #ifdef BR_FEATURE_X509_TIME_CALLBACK
   if(!verifypeer)
     br_x509_minimal_set_time_callback(&backend->x509.minimal, NULL, &noverifypeer_time_cb);
 #endif
+  br_x509_minimal_set_rsa(&backend->x509.minimal,
+                          br_ssl_engine_get_rsavrfy(&backend->ctx.eng));
+  br_x509_minimal_set_ecdsa(&backend->x509.minimal,
+                            br_ssl_engine_get_ec(&backend->ctx.eng),
+                            br_ssl_engine_get_ecdsa(&backend->ctx.eng));
   br_ssl_engine_set_x509(&backend->ctx.eng, &backend->x509.vtable);
+
+  bearssl_set_hashes(&backend->ctx.eng, &backend->x509.minimal);
 
   if(Curl_ssl_scache_use(cf, data)) {
     struct Curl_ssl_session *sc_session = NULL;
