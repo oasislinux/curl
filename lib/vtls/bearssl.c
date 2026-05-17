@@ -415,75 +415,48 @@ bearssl_set_ssl_version_min_max(struct Curl_easy *data,
 }
 
 static const uint16_t ciphertable[] = {
-  /* RFC 2246 TLS 1.0 */
-  BR_TLS_RSA_WITH_3DES_EDE_CBC_SHA,                        /* 0x000A */
+  /* Prefer ChaCha20 over AES */
+  BR_TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,        /* 0xCCA9 */
+  BR_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,          /* 0xCCA8 */
 
-  /* RFC 3268 TLS 1.0 AES */
-  BR_TLS_RSA_WITH_AES_128_CBC_SHA,                         /* 0x002F */
-  BR_TLS_RSA_WITH_AES_256_CBC_SHA,                         /* 0x0035 */
+  /* Use ECDHE if possible */
 
-  /* RFC 5246 TLS 1.2 */
-  BR_TLS_RSA_WITH_AES_128_CBC_SHA256,                      /* 0x003C */
-  BR_TLS_RSA_WITH_AES_256_CBC_SHA256,                      /* 0x003D */
-
-  /* RFC 5288 TLS 1.2 AES GCM */
-  BR_TLS_RSA_WITH_AES_128_GCM_SHA256,                      /* 0x009C */
-  BR_TLS_RSA_WITH_AES_256_GCM_SHA384,                      /* 0x009D */
-
-  /* RFC 4492 TLS 1.0 ECC */
-  BR_TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA,                 /* 0xC003 */
-  BR_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA,                  /* 0xC004 */
-  BR_TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA,                  /* 0xC005 */
-  BR_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA,                /* 0xC008 */
-  BR_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,                 /* 0xC009 */
-  BR_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,                 /* 0xC00A */
-  BR_TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA,                   /* 0xC00D */
-  BR_TLS_ECDH_RSA_WITH_AES_128_CBC_SHA,                    /* 0xC00E */
-  BR_TLS_ECDH_RSA_WITH_AES_256_CBC_SHA,                    /* 0xC00F */
-  BR_TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,                  /* 0xC012 */
-  BR_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,                   /* 0xC013 */
-  BR_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,                   /* 0xC014 */
-
-  /* RFC 5289 TLS 1.2 ECC HMAC SHA256/384 */
-  BR_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,              /* 0xC023 */
-  BR_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,              /* 0xC024 */
-  BR_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,               /* 0xC025 */
-  BR_TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384,               /* 0xC026 */
-  BR_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,                /* 0xC027 */
-  BR_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,                /* 0xC028 */
-  BR_TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256,                 /* 0xC029 */
-  BR_TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384,                 /* 0xC02A */
-
-  /* RFC 5289 TLS 1.2 GCM */
+  /* For AES, prefer GCM to CCM, CCM to CCM_8, and CCM_8 to CBC */
   BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,              /* 0xC02B */
-  BR_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,              /* 0xC02C */
-  BR_TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,               /* 0xC02D */
-  BR_TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,               /* 0xC02E */
   BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,                /* 0xC02F */
+  BR_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,              /* 0xC02C */
   BR_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,                /* 0xC030 */
-  BR_TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256,                 /* 0xC031 */
-  BR_TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384,                 /* 0xC032 */
 
 #ifdef BR_TLS_RSA_WITH_AES_128_CCM
-  /* RFC 6655 TLS 1.2 CCM
-     Supported since BearSSL 0.6 */
-  BR_TLS_RSA_WITH_AES_128_CCM,                             /* 0xC09C */
-  BR_TLS_RSA_WITH_AES_256_CCM,                             /* 0xC09D */
-  BR_TLS_RSA_WITH_AES_128_CCM_8,                           /* 0xC0A0 */
-  BR_TLS_RSA_WITH_AES_256_CCM_8,                           /* 0xC0A1 */
-
-  /* RFC 7251 TLS 1.2 ECC CCM
-     Supported since BearSSL 0.6 */
   BR_TLS_ECDHE_ECDSA_WITH_AES_128_CCM,                     /* 0xC0AC */
   BR_TLS_ECDHE_ECDSA_WITH_AES_256_CCM,                     /* 0xC0AD */
   BR_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,                   /* 0xC0AE */
   BR_TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8,                   /* 0xC0AF */
 #endif
 
-  /* RFC 7905 TLS 1.2 ChaCha20-Poly1305
-     Supported since BearSSL 0.2 */
-  BR_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,          /* 0xCCA8 */
-  BR_TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,        /* 0xCCA9 */
+  BR_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,              /* 0xC023 */
+  BR_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,                /* 0xC027 */
+  BR_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,              /* 0xC024 */
+  BR_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,                /* 0xC028 */
+
+  /* Prefer ECDH over RSA key exchange */
+  BR_TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,               /* 0xC02D */
+  BR_TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256,                 /* 0xC031 */
+  BR_TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,               /* 0xC02E */
+  BR_TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384,                 /* 0xC032 */
+  BR_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,               /* 0xC025 */
+  BR_TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256,                 /* 0xC029 */
+  BR_TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384,               /* 0xC026 */
+  BR_TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384,                 /* 0xC02A */
+
+  BR_TLS_RSA_WITH_AES_128_GCM_SHA256,                      /* 0x009C */
+  BR_TLS_RSA_WITH_AES_256_GCM_SHA384,                      /* 0x009D */
+  BR_TLS_RSA_WITH_AES_128_CCM,                             /* 0xC09C */
+  BR_TLS_RSA_WITH_AES_256_CCM,                             /* 0xC09D */
+  BR_TLS_RSA_WITH_AES_128_CCM_8,                           /* 0xC0A0 */
+  BR_TLS_RSA_WITH_AES_256_CCM_8,                           /* 0xC0A1 */
+  BR_TLS_RSA_WITH_AES_128_CBC_SHA256,                      /* 0x003C */
+  BR_TLS_RSA_WITH_AES_256_CBC_SHA256,                      /* 0x003D */
 };
 
 #define NUM_OF_CIPHERS CURL_ARRAYSIZE(ciphertable)
@@ -595,13 +568,16 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
                            sizeof(backend->buf), 1);
 
   if(conn_config->cipher_list) {
-    /* Override the ciphers as specified. For the default cipher list see the
-       BearSSL source code of br_ssl_client_init_full() */
+    /* Override the ciphers as specified */
     CURL_TRC_CF(data, cf, "connect_step1, set ciphers");
     ret = bearssl_set_selected_ciphers(data, &backend->ctx.eng,
                                        conn_config->cipher_list);
     if(ret)
       return ret;
+  }
+  else {
+    br_ssl_engine_set_suites(&backend->ctx.eng, ciphertable,
+                             CURL_ARRAYSIZE(ciphertable));
   }
 
   /* initialize X.509 context */
