@@ -27,14 +27,14 @@
 
 #include <bearssl.h>
 
-#include "bearssl.h"
-#include "cipher_suite.h"
+#include "vtls/bearssl.h"
+#include "vtls/cipher_suite.h"
 #include "urldata.h"
 #include "curl_trc.h"
 #include "curlx/fopen.h"
-#include "vtls.h"
-#include "vtls_int.h"
-#include "vtls_scache.h"
+#include "vtls/vtls.h"
+#include "vtls/vtls_int.h"
+#include "vtls/vtls_scache.h"
 #include "connect.h"
 #include "multiif.h"
 
