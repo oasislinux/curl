@@ -375,11 +375,7 @@ bearssl_set_ssl_version_min_max(struct Curl_easy *data,
   switch(conn_config->version) {
   case CURL_SSLVERSION_TLSv1:
   case CURL_SSLVERSION_TLSv1_0:
-    version_min = BR_TLS10;
-    break;
   case CURL_SSLVERSION_TLSv1_1:
-    version_min = BR_TLS11;
-    break;
   case CURL_SSLVERSION_TLSv1_2:
     version_min = BR_TLS12;
     break;
@@ -399,11 +395,7 @@ bearssl_set_ssl_version_min_max(struct Curl_easy *data,
     version_max = BR_TLS12;
     break;
   case CURL_SSLVERSION_MAX_TLSv1_1:
-    version_max = BR_TLS11;
-    break;
   case CURL_SSLVERSION_MAX_TLSv1_0:
-    version_max = BR_TLS10;
-    break;
   default:
     failf(data, "BearSSL: unsupported maximum TLS version value");
     return CURLE_SSL_CONNECT_ERROR;
