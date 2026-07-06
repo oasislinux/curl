@@ -39,7 +39,7 @@ env:
   # renovate: datasource=github-tags depName=nghttp2/nghttp2 versioning=semver registryUrl=https://github.com
   NGHTTP2_VERSION: 1.69.0
   # renovate: datasource=github-releases depName=pizlonator/fil-c versioning=semver-coerced registryUrl=https://github.com
-  FIL_C_VERSION: 0.678
+  FIL_C_VERSION: '0.680'
 
 jobs:
   linux:
@@ -66,14 +66,16 @@ jobs:
             configure: --with-bearssl --enable-debug
 
           - name: 'bearssl valgrind 1'
-            image: ubuntu-24.04-arm
-            install_packages: libbearssl-dev valgrind
+            image: ubuntu-26.04-arm
+            install_packages: gcc-16 libbearssl-dev valgrind
+            CC: gcc-16
             tflags: '--min=820 1 to 1000'
             generate: -DCURL_USE_BEARSSL=ON -DENABLE_DEBUG=ON -DCURL_DROP_UNUSED=ON
 
           - name: 'bearssl valgrind 2'
-            image: ubuntu-24.04-arm
-            install_packages: libbearssl-dev valgrind
+            image: ubuntu-26.04-arm
+            install_packages: gcc-16 libbearssl-dev valgrind
+            CC: gcc-16
             tflags: '--min=830 1001 to 9999'
             generate: -DCURL_USE_BEARSSL=ON -DENABLE_DEBUG=ON
 
@@ -91,7 +93,7 @@ jobs:
           - name: 'bearssl !ipv6 !--libcurl !--digest-auth'
             image: ubuntu-24.04-arm
             install_packages: libbearssl-dev
-            configure: --with-bearssl --disable-ipv6 --enable-debug --disable-unity --disable-libcurl-option --disable-digest-auth --enable-ntlm
+            configure: --with-bearssl --disable-ipv6 --enable-debug --disable-unity --disable-libcurl-option --disable-digest-auth --enable-ntlm --enable-smb
 
           - name: 'curl_global_init_mem debug valgrind'
             image: ubuntu-24.04-arm
@@ -100,7 +102,7 @@ jobs:
             configure: >-
               --enable-init-mem-debug
               --with-bearssl --disable-debug --enable-unity
-              --enable-ntlm
+              --enable-ntlm --enable-smb
 
           - name: 'bearssl https-only'
             image: ubuntu-24.04-arm
@@ -140,20 +142,23 @@ jobs:
               -DCURL_ENABLE_NTLM=ON
 
           - name: 'clang-tidy'
-            install_packages: clang-20 clang-tidy-20 libbearssl-dev libidn2-dev libssh2-1-dev libnghttp2-dev libldap-dev libkrb5-dev libgsasl-dev
+            image: ubuntu-26.04
+            install_packages: clang-22 clang-tidy-22 libbearssl-dev libidn2-dev libssh2-1-dev libnghttp2-dev libldap-dev libkrb5-dev libgsasl-dev
             install_steps: skiprun
-            CC: clang-20
+            CC: clang-22
 
             generate: >-
               -DCURL_USE_BEARSSL=ON
               -DCURL_USE_GSASL=ON
               -DCURL_USE_GSSAPI=ON -DUSE_SSLS_EXPORT=ON
-              -DCURL_CLANG_TIDY=ON -DCLANG_TIDY=/usr/bin/clang-tidy-20
+              -DCURL_CLANG_TIDY=ON -DCLANG_TIDY=/usr/bin/clang-tidy-22
 
           - name: 'address-sanitizer'
-            install_packages: clang-20 libbearssl-dev libssh-dev libidn2-dev libnghttp2-dev libubsan1 libasan8 libtsan2
+            image: ubuntu-26.04
+            install_packages: clang-22 libbearssl-dev libssh-dev libidn2-dev libnghttp2-dev libubsan1 libasan8 libtsan2
             install_steps: pytest randcurl
-            CC: clang-20
+            install_steps_brew: openssl@4
+            CC: clang-22
             CFLAGS: >-
               -fsanitize=address,bounds,leak,signed-integer-overflow,undefined
               -fno-sanitize-recover=address,bounds,leak,signed-integer-overflow,undefined
@@ -166,16 +171,17 @@ jobs:
             generate: -DENABLE_DEBUG=ON -DCURL_USE_BEARSSL=ON -DCURL_USE_LIBSSH=ON
 
           - name: 'thread-sanitizer'
-            install_packages: clang-20 libtsan2
+            image: ubuntu-26.04
+            install_packages: clang-22 libtsan2
             install_steps: pytest bearssl-tsan
-            CC: clang-20
+            CC: clang-22
             CFLAGS: -fsanitize=thread -g
             LDFLAGS: -fsanitize=thread
             generate: -DBEARSSL_INCLUDE_DIR=/home/runner/bearssl/include -DBEARSSL_LIBRARY=/home/runner/bearssl/libbearssl.so -DUSE_ECH=ON -DENABLE_DEBUG=ON
 
           - name: 'event-based'
             install_packages: libssh-dev libbearssl-dev
-            configure: --enable-debug --enable-static --disable-shared --disable-threaded-resolver --with-libssh --with-bearssl --enable-ntlm
+            configure: --enable-debug --enable-static --disable-shared --disable-threaded-resolver --with-libssh --with-bearssl --enable-ntlm --enable-smb
             tflags: '-n --test-event --min=1320'
 
           - name: 'duphandle'
@@ -201,7 +207,7 @@ jobs:
     steps:
       - name: 'install prereqs'
         if: ${{ matrix.build.container == null }}
-        timeout-minutes: 2
+        timeout-minutes: 3
         env:
           INSTALL_PACKAGES: >-
             ${{ !contains(matrix.build.install_steps, 'skipall') && !contains(matrix.build.install_steps, 'skiprun') && 'stunnel4' || '' }}
@@ -217,12 +223,6 @@ jobs:
             libpsl-dev zlib1g-dev libbrotli-dev libzstd-dev \
             ${INSTALL_PACKAGES} \
             ${MATRIX_INSTALL_PACKAGES}
-          # Workaround for ubuntu-24.04-arm images having 0777 for /home/runner,
-          # which breaks the test sshd server used in pytest.
-          if [[ "$(uname -m)" = *'aarch64'* ]]; then
-            ls -l /home
-            chmod 0755 /home/runner
-          fi
 
       - name: 'install prereqs (alpine)'
         if: ${{ startsWith(matrix.build.container, 'alpine') }}
@@ -238,14 +238,14 @@ jobs:
         run: |
           cd /home/runner
           curl --disable --fail --silent --show-error --connect-timeout 15 --max-time 120 --retry 6 --retry-connrefused \
-            --location "https://github.com/pizlonator/fil-c/releases/download/v${FIL_C_VERSION}/filc-${FIL_C_VERSION}-linux-x86_64.tar.xz" --output pkg.bin
+            --location --proto-redir =https "https://github.com/pizlonator/fil-c/releases/download/v${FIL_C_VERSION}/filc-${FIL_C_VERSION}-linux-x86_64.tar.xz" --output pkg.bin
           sha256sum pkg.bin && tar -xJf pkg.bin && rm -f pkg.bin && mv "filc-${FIL_C_VERSION}-linux-x86_64" filc
           cd filc
           ./setup.sh
 
       - name: 'cache bearssl (filc)'
         if: ${{ contains(matrix.build.install_steps, 'bearssl-filc') }}
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         id: cache-bearssl-filc
         env:
           cache-name: cache-bearssl-filc
@@ -254,10 +254,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.BEARSSL_VERSION }}-${{ env.FIL_C_VERSION }}
 
       - name: 'build bearssl (filc)'
-        if: ${{ contains(matrix.build.install_steps, 'bearssl-filc') && steps.cache-bearssl-filc.outputs.cache-hit != 'true' }}
+        if: ${{ contains(matrix.build.install_steps, 'bearssl-filc') && !steps.cache-bearssl-filc.outputs.cache-hit }}
         run: |
           curl -LsSf --retry 6 --retry-connrefused --max-time 999 \
-            --location "https://bearssl.org/bearssl-${BEARSSL_VERSION}.tar.gz" --output pkg.bin
+            --location --proto-redir =https "https://bearssl.org/bearssl-${BEARSSL_VERSION}.tar.gz" --output pkg.bin
           sha256sum pkg.bin && tar -xf pkg.bin && rm -f pkg.bin
           cd "bearssl-${BEARSSL_VERSION}"
           make CC=/home/runner/filc/build/bin/filcc 'LD=$(CC)' 'LDDLL=$(CC)'
@@ -267,7 +267,7 @@ jobs:
 
       - name: 'cache nghttp2 (filc)'
         if: ${{ contains(matrix.build.install_steps, 'nghttp2-filc') }}
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         id: cache-nghttp2-filc
         env:
           cache-name: cache-nghttp2-filc
@@ -276,10 +276,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.NGHTTP2_VERSION }}-${{ env.FIL_C_VERSION }}
 
       - name: 'build nghttp2 (filc)'
-        if: ${{ contains(matrix.build.install_steps, 'nghttp2-filc') && steps.cache-nghttp2-filc.outputs.cache-hit != 'true' }}
+        if: ${{ contains(matrix.build.install_steps, 'nghttp2-filc') && !steps.cache-nghttp2-filc.outputs.cache-hit }}
         run: |
           curl --disable --fail --silent --show-error --connect-timeout 15 --max-time 120 --retry 6 --retry-connrefused \
-            --location "https://github.com/nghttp2/nghttp2/releases/download/v${NGHTTP2_VERSION}/nghttp2-${NGHTTP2_VERSION}.tar.xz" --output pkg.bin
+            --location --proto-redir =https "https://github.com/nghttp2/nghttp2/releases/download/v${NGHTTP2_VERSION}/nghttp2-${NGHTTP2_VERSION}.tar.xz" --output pkg.bin
           sha256sum pkg.bin && tar -xJf pkg.bin && rm -f pkg.bin
           cd "nghttp2-${NGHTTP2_VERSION}"
           cmake -B . -G Ninja -DENABLE_LIB_ONLY=ON -DBUILD_TESTING=OFF -DENABLE_DOC=OFF -DCMAKE_INSTALL_PREFIX=/home/runner/nghttp2 \
@@ -290,7 +290,7 @@ jobs:
 
       - name: 'cache bearssl (thread sanitizer)'
         if: ${{ contains(matrix.build.install_steps, 'bearssl-tsan') }}
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         id: cache-bearssl-tsan
         env:
           cache-name: cache-bearssl-tsan
@@ -299,10 +299,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.BEARSSL_VERSION }}
 
       - name: 'build bearssl (thread sanitizer)'
-        if: ${{ contains(matrix.build.install_steps, 'bearssl-tsan') && steps.cache-bearssl-tsan.outputs.cache-hit != 'true' }}
+        if: ${{ contains(matrix.build.install_steps, 'bearssl-tsan') && !steps.cache-bearssl-tsan.outputs.cache-hit }}
         run: |
           curl -LsSf --retry 6 --retry-connrefused --max-time 999 \
-            --location "https://bearssl.org/bearssl-${BEARSSL_VERSION}.tar.gz" --output pkg.bin
+            --location --proto-redir =https "https://bearssl.org/bearssl-${BEARSSL_VERSION}.tar.gz" --output pkg.bin
           sha256sum pkg.bin && tar -xf pkg.bin && rm -f pkg.bin
           cd "bearssl-${BEARSSL_VERSION}"
           make CC=clang 'LD=$(CC)' 'LDDLL=$(CC)' CFLAGS='-fsanitize=thread' LDFLAGS='-fsanitize=thread' LDDLLFLAGS='-shared -fsanitize=thread'
@@ -312,11 +312,12 @@ jobs:
 
       - name: 'install Intel compilers'
         if: ${{ contains(matrix.build.install_steps, 'intelc') }}
-        timeout-minutes: 2
+        timeout-minutes: 4
         run: |
           curl --disable --fail --silent --show-error --connect-timeout 15 --max-time 120 --retry 6 --retry-connrefused \
             --compressed https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | \
             sudo tee /etc/apt/trusted.gpg.d/intel-sw.asc >/dev/null
+          sudo find /etc/apt/sources.list.d -type f -not -name 'ubuntu.sources' -delete -print
           sudo sed -i 's/priority:1/priority:9/' /etc/apt/apt-mirrors.txt; cat /etc/apt/apt-mirrors.txt
           sudo add-apt-repository 'deb https://apt.repos.intel.com/oneapi all main'
           sudo apt-get -o Dpkg::Use-Pty=0 install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
@@ -344,7 +345,7 @@ jobs:
           if [ "${MATRIX_BUILD}" = 'cmake' ]; then
             cmake -B bld -G Ninja \
               -DCMAKE_INSTALL_PREFIX="$HOME"/curl-install \
-              -DCMAKE_C_COMPILER_TARGET="$(uname -m)-pc-linux-gnu" -DBUILD_STATIC_LIBS=ON \
+              -DCMAKE_C_COMPILER_TARGET="$(uname -m)-unknown-linux-gnu" -DBUILD_STATIC_LIBS=ON \
               -DCMAKE_UNITY_BUILD=ON -DCURL_WERROR=ON \
               ${MATRIX_GENERATE}
           else
@@ -433,7 +434,7 @@ jobs:
             TFLAGS+=' --buildinfo'  # only test-ci sets this by default, set it manually for test-torture
           fi
           [ -f ~/venv/bin/activate ] && source ~/venv/bin/activate
-          if [[ "${MATRIX_INSTALL_STEPS}" = *'codeset-test'* ]]; then
+          if [[ "${MATRIX_INSTALL_STEPS}" = *'codeset-test1'* ]]; then
             locale || true
             export LC_ALL=C
             export LC_CTYPE=C
