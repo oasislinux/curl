@@ -496,7 +496,7 @@ static CURLcode bearssl_set_selected_ciphers(struct Curl_easy *data,
     selected[count++] = id;
   }
 
-  if(count == 0) {
+  if(!count) {
     failf(data, "BearSSL: no supported cipher in list");
     return CURLE_SSL_CIPHER;
   }
@@ -767,7 +767,7 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
           connssl->io_need |= CURL_SSL_IO_NEED_RECV;
         return result;
       }
-      if(nread == 0) {
+      if(!nread) {
         failf(data, "SSL: EOF without close notify");
         return CURLE_RECV_ERROR;
       }
