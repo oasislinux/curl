@@ -258,7 +258,7 @@ fail:
   else {
     for(i = 0; i < ca.anchors_len; ++i)
       curlx_free(ca.anchors[i].dn.data);
-    curlx_free(ca.anchors);
+    curlx_safefree(ca.anchors);
   }
 
   return ca.err;
