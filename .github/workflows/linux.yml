@@ -260,6 +260,7 @@ jobs:
             --location --proto-redir =https "https://bearssl.org/bearssl-${BEARSSL_VERSION}.tar.gz" --output pkg.bin
           sha256sum pkg.bin && tar -xf pkg.bin && rm -f pkg.bin
           cd "bearssl-${BEARSSL_VERSION}"
+          # shellcheck disable=SC2016
           make CC=/home/runner/filc/build/bin/filcc 'LD=$(CC)' 'LDDLL=$(CC)'
           mkdir -p ~/bearssl/lib ~/bearssl/include
           cp inc/*.h ~/bearssl/include
