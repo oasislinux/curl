@@ -737,7 +737,7 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
               "chain could not be linked to a trust anchor");
         return CURLE_PEER_FAILED_VERIFICATION;
       }
-      failf(data, "BearSSL: connection error 0x%04x", err);
+      failf(data, "BearSSL: connection error 0x%04x", (unsigned int)err);
       /* X.509 errors are documented to have the range 32..63 */
       if(err >= 32 && err < 64)
         return CURLE_PEER_FAILED_VERIFICATION;
@@ -748,7 +748,7 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
     if(state & BR_SSL_SENDREC) {
       buf = br_ssl_engine_sendrec_buf(&backend->ctx.eng, &len);
       result = Curl_conn_cf_send(cf->next, data, buf, len, FALSE, &nwritten);
-      CURL_TRC_CF(data, cf, "ssl_send(len=%zu) -> %d, %zd", len, result,
+      CURL_TRC_CF(data, cf, "ssl_send(len=%zu) -> %d, %zu", len, (int)result,
                   nwritten);
       if(result != CURLE_OK) {
         if(result == CURLE_AGAIN)
@@ -760,7 +760,7 @@ static CURLcode bearssl_run_until(struct Curl_cfilter *cf,
     else if(state & BR_SSL_RECVREC) {
       buf = br_ssl_engine_recvrec_buf(&backend->ctx.eng, &len);
       result = Curl_conn_cf_recv(cf->next, data, (char *)buf, len, &nread);
-      CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %d, %zd", len, result,
+      CURL_TRC_CF(data, cf, "ssl_recv(len=%zu) -> %d, %zu", len, (int)result,
                   nread);
       if(result != CURLE_OK) {
         if(result == CURLE_AGAIN)
@@ -1058,11 +1058,12 @@ static CURLcode bearssl_shutdown(struct Curl_cfilter *cf,
     *done = TRUE;
   }
   else if(result == CURLE_AGAIN) {
-    CURL_TRC_CF(data, cf, "shutdown EAGAIN, io_need=%x", connssl->io_need);
+    CURL_TRC_CF(data, cf, "shutdown EAGAIN, io_need=%x",
+                (unsigned int)connssl->io_need);
     result = CURLE_OK;
   }
   else
-    CURL_TRC_CF(data, cf, "shutdown error: %d", result);
+    CURL_TRC_CF(data, cf, "shutdown error: %d", (int)result);
 
   cf->shutdown = (result || *done);
   return result;
