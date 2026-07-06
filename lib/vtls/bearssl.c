@@ -510,7 +510,7 @@ static void bearssl_set_hashes(br_ssl_engine_context *eng,
 {
   static const struct {
     int id;
-    const br_hash_class *class;
+    const br_hash_class *hash;
   } hashes[] = {
     {br_sha224_ID, &br_sha224_vtable},
     {br_sha256_ID, &br_sha256_vtable},
@@ -520,8 +520,8 @@ static void bearssl_set_hashes(br_ssl_engine_context *eng,
   size_t i;
 
   for(i = 0; i < CURL_ARRAYSIZE(hashes); i++) {
-    br_ssl_engine_set_hash(eng, hashes[i].id, hashes[i].class);
-    br_x509_minimal_set_hash(x509, hashes[i].id, hashes[i].class);
+    br_ssl_engine_set_hash(eng, hashes[i].id, hashes[i].hash);
+    br_x509_minimal_set_hash(x509, hashes[i].id, hashes[i].hash);
   }
 }
 
