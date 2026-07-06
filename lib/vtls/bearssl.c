@@ -682,7 +682,7 @@ static CURLcode bearssl_connect_step1(struct Curl_cfilter *cf,
                                       data->set.ssl.fsslctxp);
     Curl_set_in_callback(data, FALSE);
     if(result) {
-      failf(data, "BearSSL: error signaled by ssl ctx callback");
+      failf(data, "BearSSL: error signaled by SSL ctx callback");
       return result;
     }
   }
